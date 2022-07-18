@@ -1,7 +1,7 @@
 import datetime
 import os
 import uuid
-
+from fastapi.encoders import jsonable_encoder
 from PIL import Image
 from fastapi import UploadFile
 from sqlalchemy.orm import Session
@@ -84,10 +84,28 @@ def get_post_view(db: Session, post_id: int):
     """
     db_post = db.query(Post.id, Post.title, Post.price, Post.description, Post.trade, User.username).join(User).\
         filter((User.id == Post.userId)).filter(Post.id == post_id).first()
+    db_post = db_post._mapping
     if db_post:
         return db_post
     else:
+        return
+
+def get_post_view_photos(db: Session, post_id: int):
+    """Return a list with photos' id and url of a post with an id given.
+
+    Keyword arguments:
+    db -- database connection
+    post_id -- unique post identifier
+
+
+    """
+    db_photos = db.query(PostPhoto.id, PostPhoto.url).join(Post).filter(Post.id == PostPhoto.postId).all()
+    db_photos = jsonable_encoder(db_photos)
+    if db_photos:
+        return db_photos
+    else:
         return False
+
 
 
 def get_post_view_all(db: Session, user_id: int):
@@ -209,9 +227,9 @@ def save_photo(file:UploadFile, im:Image):
     ext = file.filename[file.filename.rfind("."):]
     filename = file_uuid + ext
     path_rel = os.getcwd()
-    path_rel = os.path.join(path_rel, "pics_web", filename)
+    path_rel = os.path.join(path_rel, "pics_web", filename).replace("\\","/")
     im.save(path_rel)
-    filename = os.path.join("pics_web", filename)
+    filename = os.path.join("pics_web", filename).replace("\\","/")
     return filename
 
 
