@@ -124,7 +124,7 @@ async def view_post(post_id: int,
     """
     post_edited: dict = post_crud.get_post_view(db=db, post_id=post_id)
     post_edited = jsonable_encoder(post_edited)
-    return JSONResponse(content=[post_edited])
+    return JSONResponse(content=post_edited)
 
 
 @router.get("/{post_id}/{photo_id}", summary="Viewing a photo of a particular post",
@@ -161,7 +161,7 @@ async def view_posts(db: Session = Depends(get_db),
     user_id = int(user.id)
     post_edited: dict = post_crud.get_post_view_all(db=db, user_id=user_id)
     post_edited = jsonable_encoder(post_edited)
-    return JSONResponse(content=[post_edited])
+    return JSONResponse(content=post_edited)
 
 
 @router.post("/block", summary="Blocking a particular post for yourself",

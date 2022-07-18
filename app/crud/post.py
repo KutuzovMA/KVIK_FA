@@ -208,8 +208,10 @@ def save_photo(file:UploadFile, im:Image):
     file_uuid = str(uuid.uuid4())
     ext = file.filename[file.filename.rfind("."):]
     filename = file_uuid + ext
-    print(filename)
-    im.save(filename)
+    path_rel = os.getcwd()
+    path_rel = os.path.join(path_rel, "pics_web", filename)
+    im.save(path_rel)
+    filename = os.path.join("pics_web", filename)
     return filename
 
 
