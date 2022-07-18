@@ -123,7 +123,7 @@ async def view_post(post_id: int,
 
     """
     post_edited: dict = post_crud.get_post_view(db=db, post_id=post_id)
-    post_photos = post_crud.get_post_view_photos(db=db, post_id=post_id)
+    post_photos = post_crud.get_post_view_photo(db=db, post_id=post_id)
 
     # print(post_edited)
     post_edited = jsonable_encoder(post_edited)

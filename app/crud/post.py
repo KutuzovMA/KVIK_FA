@@ -1,3 +1,4 @@
+import copy
 import datetime
 import os
 import uuid
@@ -5,6 +6,7 @@ from fastapi.encoders import jsonable_encoder
 from PIL import Image
 from fastapi import UploadFile
 from sqlalchemy.orm import Session
+from operator import itemgetter
 
 from app.db.db_models import Post, PostPhoto, Block_mod, Block_pers, User
 from app.schemas import post as post_schema
@@ -90,7 +92,7 @@ def get_post_view(db: Session, post_id: int):
     else:
         return
 
-def get_post_view_photos(db: Session, post_id: int):
+def get_post_view_photo(db: Session, post_id: int):
     """Return a list with photos' id and url of a post with an id given.
 
     Keyword arguments:
@@ -99,7 +101,26 @@ def get_post_view_photos(db: Session, post_id: int):
 
 
     """
-    db_photos = db.query(PostPhoto.id, PostPhoto.url).join(Post).filter(Post.id == PostPhoto.postId).all()
+    db_photos = db.query(PostPhoto.id, PostPhoto.url).join(Post).filter(Post.id == PostPhoto.postId).\
+        filter(PostPhoto.postId == post_id).all()
+    db_photos = jsonable_encoder(db_photos)
+    if db_photos:
+        return db_photos
+    else:
+        return False
+
+def get_posts_view_photos(db: Session, user_id: int):
+    """Return a list with photos' id and url of a post with an id given.
+
+    Keyword arguments:
+    db -- database connection
+    post_id -- unique post identifier
+
+
+    """
+    all_blocked_posts = get_block_post(db=db, user_id=user_id)
+    db_photos = db.query(PostPhoto).join(Post).filter(Post.id == PostPhoto.postId).\
+        filter(PostPhoto.postId.not_in(all_blocked_posts)).all()
     db_photos = jsonable_encoder(db_photos)
     if db_photos:
         return db_photos
@@ -120,6 +141,17 @@ def get_post_view_all(db: Session, user_id: int):
     db_post = db.query(Post.id, Post.title, Post.price, Post.description, Post.trade, User.username). \
         join(User).filter((User.id == Post.userId)).filter(
         Post.id.not_in(all_blocked_posts)).all()
+    db_post :dict = jsonable_encoder(db_post)
+    db_photos = get_posts_view_photos(db=db, user_id=user_id)
+    db_photos_del = copy.deepcopy(db_photos)
+    for page in range(len(db_post)):
+        clean_photos = []
+        for ph_index in range(len(db_photos_del)):
+            if db_post[page]["id"] == db_photos_del[ph_index]["postId"]:
+                clean_photos.append(db_photos[ph_index])
+        for i in range(len(clean_photos)):
+            del(clean_photos[i]["postId"])
+        db_post[page]["photo"] = clean_photos
     if db_post:
         return db_post
     else:
