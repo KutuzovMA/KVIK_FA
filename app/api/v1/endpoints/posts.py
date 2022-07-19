@@ -1,3 +1,5 @@
+import os
+
 from PIL import Image, UnidentifiedImageError
 from fastapi import APIRouter, Depends, File, HTTPException
 from fastapi import UploadFile
@@ -146,7 +148,8 @@ async def view_post(post_id: int,
 
     """
     file_name: str = post_crud.get_file_out(db=db, post_id=post_id, photo_id=photo_id)
-    path_rel = post_crud.get_file_path(file_name=file_name)
+    path_rel = os.getcwd()
+    path_rel = os.path.join(path_rel, str(file_name)).replace("\\", "/")
     return FileResponse(path=path_rel)
 
 

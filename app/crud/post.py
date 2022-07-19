@@ -5,6 +5,7 @@ import uuid
 from fastapi.encoders import jsonable_encoder
 from PIL import Image
 from fastapi import UploadFile
+from sqlalchemy import column
 from sqlalchemy.orm import Session
 from operator import itemgetter
 
@@ -93,7 +94,7 @@ def get_post_view(db: Session, post_id: int):
         return
 
 def get_post_view_photo(db: Session, post_id: int):
-    """Return a list with photos' id and url of a post with an id given.
+    """Return a dict with photos' id and url of a post with an id given.
 
     Keyword arguments:
     db -- database connection
@@ -130,7 +131,7 @@ def get_posts_view_photos(db: Session, user_id: int):
 
 
 def get_post_view_all(db: Session, user_id: int):
-    """Return a query with information about all posts, blocked by either given user or moderator.
+    """Return a dict with information about all posts and their photos, that aren't blocked by either given user or moderator.
 
     Keyword arguments:
     db -- database connection
@@ -141,6 +142,7 @@ def get_post_view_all(db: Session, user_id: int):
     db_post = db.query(Post.id, Post.title, Post.price, Post.description, Post.trade, User.username). \
         join(User).filter((User.id == Post.userId)).filter(
         Post.id.not_in(all_blocked_posts)).all()
+    """.order_by(Post.id.desc()).slice(0,10)."""
     db_post :dict = jsonable_encoder(db_post)
     db_photos = get_posts_view_photos(db=db, user_id=user_id)
     db_photos_del = copy.deepcopy(db_photos)
@@ -244,7 +246,7 @@ def get_file_out(db: Session, post_id: int, photo_id: str):
     """
     db_file: str = db.query(PostPhoto.url).filter(PostPhoto.postId == post_id). \
         filter(PostPhoto.id == photo_id).first()
-    return db_file
+    return db_file[0]
 
 
 def save_photo(file:UploadFile, im:Image):
@@ -263,22 +265,3 @@ def save_photo(file:UploadFile, im:Image):
     im.save(path_rel)
     filename = os.path.join("pics_web", filename).replace("\\","/")
     return filename
-
-
-def get_file_path(file_name: str):
-    """Return a relative path to file
-
-        Keyword arguments:
-        file_name -- file name with extension
-
-    """
-    path: str = repr(file_name)
-    path = path.replace("'", '')
-    path = path.replace('(', '')
-    path = path.replace(')', '')
-    path = path.replace(",", '')
-    path = path.replace('"', '')
-    path_rel = os.getcwd()
-    os.path.join(path_rel, '')
-    path_rel = os.path.join(path_rel, path)
-    return path_rel

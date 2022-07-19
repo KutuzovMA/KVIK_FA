@@ -45,7 +45,6 @@ class UserPhoto(Base):
 
     owner = relationship("User", back_populates="photo")
 
-
 class Role(Base):
     __tablename__ = "roles"
     __table_args__ = {"schema": "public"}
